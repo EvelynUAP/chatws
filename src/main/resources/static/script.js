@@ -1,29 +1,36 @@
 let stompClient = null;
 
 function connect() {
+    if (stompClient !== null) return;
+
     const serverIp = document.getElementById('serverIp').value;
+    const username = document.getElementById('username').value.trim();
+
+    if (serverIp.trim() === '' || username === '') {
+        console.error('La IP del servidor y el usuario son obligatorios.');
+        return;
+    }
     
-    const socket = new SockJS("http://" + serverIp + ":8080/chat");
+    const socket = new SockJS("http://" + serverIp.trim() + ":8080/ws");
     stompClient = Stomp.over(socket);
 
-    stompClient.connect({}, function (frame){
-    setConnected(true);
-    console.log('Connected: ' + frame);
-    stompClient.subscribe('/topic/public', function (message) {
-        showMessage(JSON.parse(message.body));
+    stompClient.connect({}, function (frame) {
+        setConnected(true);
+        console.log('Connected: ' + frame);
+        stompClient.subscribe('/topic/public', function (message) {
+            showMessage(JSON.parse(message.body));
+        });
+    }, function (error) {
+        console.error('Error connecting to WebSocket:', error);
+        stompClient = null;
+        setConnected(false);
     });
-}, function (error) {
-    console.error('Error connecting to WebSocket:', error);
-    setConnected(false);
-});
-
-    //conexion y subcripcion
 }
 
 function disconnect() {
-    // Desconectar
     if (stompClient !== null) {
         stompClient.disconnect();
+        stompClient = null;
     }
     setConnected(false);
     console.log("Disconnected");
@@ -43,18 +50,18 @@ function setConnected(connected) {
 }
 
 function sendMessage() {
-    const username = document.getElementById('username').value;
+    if (stompClient === null || !stompClient.connected) return;
+
+    const username = document.getElementById('username').value.trim();
     const content = document.getElementById('message').value;
     
-    if (content.trim() === '') return;
+    if (username === '' || content.trim() === '') return;
 
     stompClient.send("/app/chat.sendMessage", {}, JSON.stringify({ 
         tipo: 'CHAT', 
         usuario: username, 
         contenido: content 
     }));
-    
-     // Conexion
     
     document.getElementById('message').value = '';
 }
@@ -63,7 +70,9 @@ function showMessage(message) {
     const messages = document.getElementById('messages');
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message';
-    messageDiv.innerHTML = '<strong>' + message.usuario + ':</strong> ' + message.contenido;
+    const author = document.createElement('strong');
+    author.textContent = message.usuario + ':';
+    messageDiv.append(author, document.createTextNode(' ' + message.contenido));
     messages.appendChild(messageDiv);
     messages.scrollTop = messages.scrollHeight;
 }

@@ -21,9 +21,15 @@ ChatWS es una aplicación de chat en tiempo real que permite a múltiples usuari
 
 ```
 ┌─────────────────┐         WebSocket          ┌──────────────────┐
-│   Cliente Web   │ ◄────────────────────────► │   Servidor       │
-│  (Navegador)    │     (ws://localhost:8080)  │   Spring Boot    │
-└─────────────────┘                            └──────────────────┘
+│   Cliente Web   │ ◄──────── WebSocket ─────► │   Servidor       │
+│  (Navegador)    │                            │   Spring Boot    │
+└─────────────────┘                            └────────┬─────────┘
+                                                        │ STOMP relay
+                                                        ▼
+                                               ┌──────────────────┐
+                                               │    RabbitMQ       │
+                                               │  (STOMP plugin)   │
+                                               └──────────────────┘
        │                                                 │
        │ 1. Conexión WebSocket                          │
        │ 2. Suscripción a /topic/public                 │
@@ -43,3 +49,45 @@ ChatWS es una aplicación de chat en tiempo real que permite a múltiples usuari
 5. **Broadcast:** El mensaje se reenvía a todos los suscriptores de `/topic/public`
 6. **Recepción:** Todos los clientes conectados reciben el mensaje simultáneamente
 
+## RabbitMQ
+
+El broker STOMP del chat se delega a RabbitMQ mediante `enableStompBrokerRelay`.
+Para ejecutar la aplicación se necesita RabbitMQ en `localhost:5672`, con el
+plugin STOMP habilitado en `localhost:61613`:
+
+```bash
+rabbitmq-plugins enable rabbitmq_stomp
+```
+
+Las credenciales por defecto configuradas son `guest` / `guest`. Se pueden
+reemplazar mediante las variables `RABBITMQ_HOST`, `RABBITMQ_PORT`,
+`RABBITMQ_USERNAME` y `RABBITMQ_PASSWORD`.
+
+### Ejecutar con Docker
+
+Con Docker Desktop iniciado, levantar RabbitMQ:
+
+```bash
+docker compose up -d
+```
+
+Luego iniciar la aplicación:
+
+```bash
+./mvnw spring-boot:run
+```
+
+En Windows también se puede utilizar:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+Abrir `http://localhost:8080`. La consola de administración de RabbitMQ queda
+disponible en `http://localhost:15672` con `guest` / `guest`.
+
+Para detener RabbitMQ:
+
+```bash
+docker compose down
+```

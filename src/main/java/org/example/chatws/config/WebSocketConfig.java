@@ -9,23 +9,27 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 @Configuration
 @EnableWebSocketMessageBroker
-@ConditionalOnProperty(name = "chat.rabbitmq.enabled", havingValue = "true", matchIfMissing = true)
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    public static final String TOPIC = "/topic";
+    public static final String APP = "/app";
+
+        @param config
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableStompBrokerRelay("/topic", "/queue")
-                .setRelayHost("localhost")
-                .setRelayPort(61613)
-                .setSystemLogin("guest")
-                .setSystemPasscode("guest")
-                .setClientLogin("guest")
-                .setClientPasscode("guest");
-        config.setApplicationDestinationPrefixes("/app");
+        config.enableStompBrokerRelay(TOPIC, "/queue")
+        .setRelayHost("localhost")
+        .setRelayPort(61613);
+        config.setApplicationDestinationPrefixes(APP);
     }
+
+        @param registry 
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws").withSockJS();
     }
+
+
 }

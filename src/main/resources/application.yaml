@@ -1,8 +1,6 @@
 spring:
-  application:
-    name: chatws
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+rabbitmq:
+host: localhost
+port: 5672
+username: guest
+password: guest
